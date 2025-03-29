@@ -1,5 +1,6 @@
 # netlify.toml
-# Configuración de build y redirecciones para Netlify
+# Configuración para desplegar correctamente una SPA en Netlify
+# con Vite y React Router, y omitir el escaneo del valor de VITE_API_BASE
 
 [build]
   command = "npm run build"
