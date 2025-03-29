@@ -1,14 +1,12 @@
 # netlify.toml
-# Este archivo configura el comportamiento del despliegue automático en Netlify.
-# Define el comando de build y la carpeta a publicar (dist), y establece una regla
-# de redirección para que todas las rutas internas sean gestionadas correctamente
-# por React Router (evitando errores 404 en rutas como /profile o /dashboard).
-# Es útil para asegurar que cualquier miembro del equipo pueda desplegar sin
-# necesidad de configuraciones manuales en el panel de Netlify.
+# Configuración de build y redirecciones para Netlify
 
 [build]
   command = "npm run build"
   publish = "dist"
+
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "VITE_API_BASE"
 
 [[redirects]]
   from = "/*"
