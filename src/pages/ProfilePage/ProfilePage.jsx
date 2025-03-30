@@ -133,7 +133,7 @@ const ProfilePage = () => {
     try {
       // Subir la imagen a Cloudinary
       const response = await api.post(
-        'vhttps://api.cloudinary.com/v1_1/dxdvc7uoe/image/upload',
+        'https://api.cloudinary.com/v1_1/dxdvc7uoe/image/upload',
         formDataImage,
         {
           headers: { 'Content-Type': 'multipart/form-data' },
