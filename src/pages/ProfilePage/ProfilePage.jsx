@@ -135,7 +135,6 @@ const ProfilePage = () => {
         'https://api.cloudinary.com/v1_1/dxdvc7uoe/image/upload',
         formDataImage,
         {
-          headers: { 'Content-Type': 'multipart/form-data' },
           withCredentials: false,
           timeout: 30000,
         }
