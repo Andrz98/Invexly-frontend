@@ -12,7 +12,7 @@ const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const navigate = useNavigate()
 
-  const API_BASE = import.meta.env.VITE_API_BASE
+  const API_BASE = import.meta.env.API_BASE
 
   /**
    * Función para iniciar sesión.
