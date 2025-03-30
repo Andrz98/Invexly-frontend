@@ -1,7 +1,7 @@
 import api from './api'
 import axios from 'axios'
 
-const API_BASE = import.meta.env.API_BASE
+const API_BASE = import.meta.env.VITE_API_BASE
 /**
  * Inicia sesión enviando credenciales al backend.
  * @param {string} email - Correo del usuario.
