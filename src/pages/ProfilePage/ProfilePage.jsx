@@ -126,8 +126,7 @@ const ProfilePage = () => {
 
     const formDataImage = new FormData()
     formDataImage.append('file', file) // Clave esperada por Cloudinary
-    formDataImage.append('upload_preset', 'user_profile') // Configuración de Cloudinary
-    formDataImage.append('cloud_name', 'dxdvc7uoe') // Configuración de Cloudinary
+    formDataImage.append('upload_preset', 'Invexly') // Configuración de Cloudinary
 
     setLoading(true)
     try {
