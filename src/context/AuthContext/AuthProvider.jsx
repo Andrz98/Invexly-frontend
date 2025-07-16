@@ -14,7 +14,6 @@ const AuthProvider = ({ children }) => {
 
   const API_BASE = import.meta.env.VITE_API_BASE
 
-
   /**
    * Función para iniciar sesión.
    * - Actualiza el estado global del usuario y la sesión.
