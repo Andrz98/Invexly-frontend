@@ -19,23 +19,40 @@ Este repositorio implementa el frontend de Invexly, una aplicación web desarrol
   - El propósito es asegurar un inicio de sesión robusto, mantener la sesión activa durante el tiempo previsto y permitir al usuario reloguear correctamente, en sincronía con la lógica del backend.
 - El código y la estructura de carpetas están organizados para favorecer la legibilidad y el mantenimiento.
 
-## Estructura relevante
+## Estructura del Proyecto
+```
 src/
-├── Components/ # Componentes organizados según Atomic Design (átomos, moléculas, organismos)
-
-├── context/ # Contexto global de autenticación y sesión
-
-├── pages/ # Vistas principales de la aplicación (Dashboard, Profile)
-
-├── services/ # Llamadas a la API y lógica de comunicación con el backend
-
-└── assets/ # Recursos estáticos (imágenes, fuentes)
+├── Components/
+│ ├── Atoms/
+│ │ └── Button.jsx
+│ ├── Molecules/
+│ │ └── AuthCard.jsx
+│ ├── Organisms/
+│ │ └── ProfileForm.jsx
+├── context/
+│ ├── AuthProvider.jsx
+│ └── ThemeContext.jsx
+├── pages/
+│ ├── Dashboard.jsx
+│ └── ProfilePage.jsx
+├── services/
+│ ├── api.js
+│ └── userService.js
+└── assets/
+├── images/
+│ └── logo.png
+└── fonts/
+└── PlayfairDisplay-Regular.ttf
 
 public/
-├── avatars/ # Avatares de ejemplo para selección de usuario
+├── avatars/
+│ └── avatar-default.png
+└── fonts/
+└── PlayfairDisplay-Bold.ttf
 
-└── fonts/ # Fuentes locales utilizadas en la UI
+```
 
+---
 
 
 ## Mantenimiento del formato y control de calidad
