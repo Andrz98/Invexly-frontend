@@ -21,14 +21,14 @@ Este repositorio implementa el frontend de Invexly, una aplicación web desarrol
 
 ## Estructura relevante
 src/
-├── Components/ # Componentes organizados según Atomic Design (átomos, moléculas, organismos)
-├── context/ # Contexto global de autenticación y sesión
-├── pages/ # Vistas principales de la aplicación (Dashboard, Profile)
-├── services/ # Llamadas a la API y lógica de comunicación con el backend
-└── assets/ # Recursos estáticos (imágenes, fuentes)
+├── Components/ # Componentes organizados según Atomic Design (átomos, moléculas, organismos).
+├── context/ # Contexto global de autenticación y sesión.
+├── pages/ # Vistas principales de la aplicación (Dashboard, Profile).
+├── services/ # Llamadas a la API y lógica de comunicación con el backend.
+└── assets/ # Recursos estáticos (imágenes, fuentes).
 public/
-├── avatars/ # Avatares de ejemplo para selección de usuario
-└── fonts/ # Fuentes locales utilizadas en la UI
+├── avatars/ # Avatares de ejemplo para selección de usuario.
+└── fonts/ # Fuentes locales utilizadas en la UI.
 
 
 ## Mantenimiento del formato y control de calidad
