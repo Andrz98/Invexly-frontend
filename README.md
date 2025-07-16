@@ -74,7 +74,7 @@ Estos scripts, definidos en `package.json`, permiten mantener la calidad y legib
 
 ## Dependencias destacadas
 
-- React 18
+- React
 - React Router DOM
 - Axios
 - React Toastify
