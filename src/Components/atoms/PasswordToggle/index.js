@@ -1,1 +1,1 @@
-export { defaul } from './PasswordToggle'
+export { default } from './PasswordToggle'
