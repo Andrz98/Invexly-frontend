@@ -76,16 +76,6 @@ const AuthProvider = ({ children }) => {
     return () => clearTimeout(timeout)
   }, [API_BASE])
 
-  useEffect(() => {
-    if (!checking && isLoggedIn && user) {
-      navigate('/dashboard')
-    }
-  }, [checking, isLoggedIn, user, navigate])
-
-  if (checking) {
-    return <div>Cargando usuario...</div>
-  }
-
   if (error) {
     return (
       <div className="text-center text-red-500 p-10">
