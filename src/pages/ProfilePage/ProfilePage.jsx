@@ -8,7 +8,7 @@ import Input from '@/Components/atoms/Input'
 import AvatarSelector from '@/Components/molecules/AvatarSelector/AvatarSelector'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
-import cloudinaryApi from '@/servicies/api/cloudinaryApi'
+import cloudinaryApi from '../../services/api/cloudinaryApi'
 
 const ProfilePage = () => {
   const { user, login } = useAuth()
