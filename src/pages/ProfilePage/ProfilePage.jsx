@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Eye, EyeOff } from 'lucide-react' // Importar los íconos para mostrar/ocultar contraseñas
+import { Eye, EyeOff } from 'lucide-react'
 import useAuth from '@/context/AuthContext/useAuth'
 import api from '@/services/api/api'
 import { UserRound, Upload, Camera, CheckCircle, XCircle } from 'lucide-react'
@@ -8,6 +8,7 @@ import Input from '@/Components/atoms/Input'
 import AvatarSelector from '@/Components/molecules/AvatarSelector/AvatarSelector'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
+import cloudinaryApi from '@/servicies/api/cloudinaryApi'
 
 const ProfilePage = () => {
   const { user, login } = useAuth()
@@ -122,38 +123,30 @@ const ProfilePage = () => {
   // ================================
   const handleImageChange = async (e) => {
     const file = e.target.files[0]
-    if (!file) return
+    if (!file || !(file instanceof File)) {
+      console.error('Archivo inválido:', file)
+      return
+    }
 
     const formDataImage = new FormData()
-    formDataImage.append('file', file) // Clave esperada por Cloudinary
-    formDataImage.append('upload_preset', 'Invexly') // Configuración de Cloudinary
+    formDataImage.append('file', file)
+    formDataImage.append('upload_preset', 'Invexly')
 
     setLoading(true)
     try {
-      // Subir la imagen a Cloudinary
-      const response = await api.post(
-        'https://api.cloudinary.com/v1_1/dxdvc7uoe/image/upload',
-        formDataImage,
-        {
-          withCredentials: false,
-          timeout: 30000,
-        }
-      )
-
+      const response = await cloudinaryApi.post('upload', formDataImage)
       const updatedImage = response.data.secure_url
-      if (!updatedImage)
-        throw new Error('No se pudo obtener la URL de la imagen.')
 
-      // Envia la URL de la imagen al backend para actualizarla
+      if (!updatedImage) {
+        throw new Error('No se pudo obtener la URL de la imagen.')
+      }
+
       const updatedUserResponse = await api.put('/auth/profile/avatar', {
         profileImage: updatedImage,
       })
 
-      // Con los cambios realizados en AuthProvider.jsx ahora usamos `login()` para actualizar el estado global del usuario
       login(updatedUserResponse.data.updatedUser)
-
-      setPreviewImage(updatedImage) // Sigue actualizando la previsualización de la imagen
-
+      setPreviewImage(updatedImage)
       toast.success('Imagen de perfil actualizada con éxito.')
 
       return updatedImage
