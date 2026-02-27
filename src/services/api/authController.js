@@ -43,13 +43,9 @@ export const login = async (email, password) => {
  */
 export const getUserSession = async () => {
   try {
-    // Si no hay cookies en el cliente, no llamar al backend
-    if (!document.cookie.includes('token')) {
-      console.warn(
-        'No hay token en las cookies, evitando solicitud innecesaria.'
-      )
-      return null
-    }
+    // Validar sesión siempre contra el backend.
+    // Esto evita falsos negativos cuando la cookie de sesión es HttpOnly
+    // y, por diseño de seguridad, no puede leerse desde document.cookie.
 
     const response = await api.get('/auth/validate-token', {
       withCredentials: true,
