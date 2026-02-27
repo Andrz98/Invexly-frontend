@@ -1,19 +1,14 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
 import './index.css'
-import AuthProvider from './context/AuthContext/AuthProvider'
-import { BrowserRouter } from 'react-router-dom'
+import { RouterProvider } from 'react-router-dom'
+import { appRouter } from './router/appRouter'
 
 try {
   const root = createRoot(document.getElementById('root'))
   root.render(
     <StrictMode>
-      <BrowserRouter>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </BrowserRouter>
+      <RouterProvider router={appRouter} />
     </StrictMode>
   )
 } catch (error) {

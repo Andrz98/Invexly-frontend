@@ -1,39 +1,15 @@
-import { useState, useContext, useCallback } from 'react'
-import { Route, Routes, Navigate } from 'react-router-dom'
-import { AuthContext } from './context/AuthContext/AuthContext'
+import { useState, useCallback } from 'react'
+import { Outlet } from 'react-router-dom'
 import Navbar from './Components/organisms/Navbar/Navbar'
 import Footer from './Components/organisms/Footer/Footer'
-import ProfilePage from './pages/ProfilePage/ProfilePage'
 import AuthCard from './Components/organisms/AuthCard/AuthCard'
-import DashboardPage from './pages/DashboardPage'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-
-/**
- * Ruta privada que solo permite el acceso si el usuario ha iniciado sesión.
- * - Muestra un loader mientras se verifica la sesión.
- * - Redirige a la raíz si no hay sesión activa.
- */
-const PrivateRoute = ({ children }) => {
-  const { isLoggedIn, checking } = useContext(AuthContext)
-
-  if (checking) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <span className="animate-spin border-t-4 border-primary-dark h-10 w-10 rounded-full"></span>
-      </div>
-    )
-  }
-
-  return isLoggedIn ? children : <Navigate to="/" replace={true} />
-}
 
 const App = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [activeForm, setActiveForm] = useState('login')
   const [dropdownHeight, setDropdownHeight] = useState(0)
-  const { isLoggedIn } = useContext(AuthContext)
-
   const openAuthModal = useCallback((formType) => {
     setActiveForm(formType)
     setIsAuthModalOpen(true)
@@ -56,42 +32,7 @@ const App = () => {
           dropdownHeight > 0 ? 'mt-10' : ''
         }`}
       >
-        <Routes>
-          <Route
-            path="/"
-            element={
-              isLoggedIn ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <div>Inicio</div>
-              )
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <PrivateRoute>
-                <ProfilePage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <DashboardPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="*"
-            element={
-              <div className="text-center mt-10 text-lg font-medium">
-                Página no encontrada
-              </div>
-            }
-          />
-        </Routes>
+        <Outlet />
       </main>
 
       <Footer />
