@@ -1,22 +1,14 @@
 import api from './api'
-import axios from 'axios'
+import { clearCsrfToken } from './csrf'
 
-const API_BASE = import.meta.env.VITE_API_BASE
 /**
- * Inicia sesión enviando credenciales al backend.
- * @param {string} email - Correo del usuario.
- * @param {string} password - Contraseña del usuario.
- * @returns {Promise<object>} - Respuesta con los datos del usuario autenticado.
+ * Cierra la sesión del usuario autenticado.
+ * @returns {Promise<boolean>} true cuando el backend cierra sesión correctamente.
  */
 export const logout = async () => {
   try {
-    const response = await axios.post(
-      `${API_BASE.replace(/\/$/, '')}/auth/logout`,
-      {},
-      {
-        withCredentials: true,
-      }
-    )
+    const response = await api.post('/auth/logout', {}, { withCredentials: true })
+    clearCsrfToken()
     return response.status === 200
   } catch (error) {
     console.error('Logout fallido:', error)
@@ -24,6 +16,12 @@ export const logout = async () => {
   }
 }
 
+/**
+ * Inicia sesión enviando credenciales al backend.
+ * @param {string} email - Correo del usuario.
+ * @param {string} password - Contraseña del usuario.
+ * @returns {Promise<object>} Respuesta con los datos del usuario autenticado.
+ */
 export const login = async (email, password) => {
   try {
     const response = await api.post(
@@ -46,15 +44,13 @@ export const login = async (email, password) => {
     throw error
   }
 }
+
 /**
  * Obtiene la sesión del usuario autenticado desde el backend.
- * @returns {Promise<object|null>} - Datos del usuario o null si no está autenticado.
+ * @returns {Promise<object|null>} Datos del usuario o null si no está autenticado.
  */
 export const getUserSession = async () => {
   try {
-    // Validar sesión siempre contra el backend.
-    // Esto evita falsos negativos cuando la cookie de sesión es HttpOnly
-
     const response = await api.get('/auth/validate-token', {
       withCredentials: true,
     })
@@ -68,7 +64,7 @@ export const getUserSession = async () => {
 
     if (error.response?.status === 401) {
       console.warn('Token inválido o no proporcionado, sesión no iniciada.')
-      return null // NO ejecutar logout si simplemente no hay sesión activa
+      return null
     }
 
     return null
