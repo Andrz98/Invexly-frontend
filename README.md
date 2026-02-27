@@ -57,20 +57,18 @@ public/
 
 ## Mantenimiento del formato y control de calidad
 
-El proyecto utiliza ESLint y Prettier para asegurar la consistencia del código y el cumplimiento de estándares definidos:
+El proyecto utiliza Prettier para asegurar la consistencia de formato del código:
 
-- `"lint": "eslint ."` analiza el código y detecta incumplimientos de las reglas configuradas.
-- `"lint:fix": "eslint . --fix"` corrige automáticamente los errores identificados por ESLint.
-- `"format": "prettier --write ."` aplica el formato definido en las reglas de Prettier a todos los archivos.
+- `"format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""` aplica el formato definido por Prettier en los archivos fuente del proyecto.
 
-Estos scripts, definidos en `package.json`, permiten mantener la calidad y legibilidad del código a lo largo del ciclo de desarrollo, minimizando errores comunes y facilitando la colaboración.
+Este script, definido en `package.json`, permite mantener la legibilidad del código y facilitar la colaboración durante el desarrollo.
 
 ## Scripts principales
 
 - `"dev"`: inicia el entorno de desarrollo con Vite
 - `"build"`: compila la aplicación para producción
 - `"preview"`: sirve una versión estática del build
-- `"lint"`: revisa el código con ESLint y Prettier
+- `"format"`: aplica formato automático con Prettier
 
 ## Dependencias destacadas
 
@@ -93,5 +91,4 @@ La configuración de Netlify incluye:
 ## Consideraciones
 
 Este frontend está diseñado para ofrecer una experiencia de usuario segura, modular y eficiente, demostrando integración efectiva con el backend de Invexly, adopción de prácticas modernas de organización del código y un enfoque estricto en la privacidad y seguridad de la información del usuario.
-
 
