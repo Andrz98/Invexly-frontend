@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import axios from 'axios'
 import { login as loginRequest, logout } from '@/services/api/authController'
 import { AuthContext } from './AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -12,14 +13,17 @@ const AuthProvider = ({ children }) => {
   const navigate = useNavigate()
 
   const API_BASE = import.meta.env.VITE_API_BASE
-  const SESSION_TIMEOUT_MS = Number(import.meta.env.VITE_SESSION_TIMEOUT_MS) || 25000
+  const SESSION_TIMEOUT_MS = Number(import.meta.env.VITE_SESSION_TIMEOUT_MS) || 45000
   const ABORT_REASON = 'Validación de sesión cancelada por timeout.'
   const SESSION_VALIDATION_ENDPOINT = '/auth/validate-token'
 
   // Normaliza la detección de cancelaciones para que los abortos esperados no rompan el flujo de autenticación.
   const isAbortError = (error) => {
     return (
+      axios.isCancel(error) ||
       error?.name === 'AbortError' ||
+      error?.name === 'CanceledError' ||
+      error?.code === 'ERR_CANCELED' ||
       error?.message === ABORT_REASON ||
       error === ABORT_REASON
     )
