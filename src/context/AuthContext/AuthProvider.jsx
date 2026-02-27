@@ -11,6 +11,16 @@ const AuthProvider = ({ children }) => {
   const navigate = useNavigate()
 
   const API_BASE = import.meta.env.VITE_API_BASE
+  const ABORT_REASON = 'Validación de sesión cancelada por timeout.'
+
+  // Identifica de forma consistente los abortos de peticiones para tratarlos como cancelaciones esperadas.
+  const isAbortError = (error) => {
+    return (
+      error?.name === 'AbortError' ||
+      error?.message === ABORT_REASON ||
+      error === ABORT_REASON
+    )
+  }
 
   const login = (userData) => {
     setUser({ ...userData })
@@ -37,10 +47,10 @@ const AuthProvider = ({ children }) => {
   }, [navigate])
 
   const checkSession = async () => {
-    try {
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 7000)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(ABORT_REASON), 7000)
 
+    try {
       const response = await fetch(
         `${API_BASE.replace(/\/$/, '')}/auth/refresh-token`,
         {
@@ -49,8 +59,6 @@ const AuthProvider = ({ children }) => {
           signal: controller.signal,
         }
       )
-
-      clearTimeout(timeout)
 
       if (!response.ok) {
         setUser(null)
@@ -62,11 +70,16 @@ const AuthProvider = ({ children }) => {
       setUser(data.user)
       setIsLoggedIn(true)
     } catch (err) {
+      if (isAbortError(err)) {
+        return
+      }
+
       console.error('Error al validar sesión:', err)
       setError('No se pudo conectar con el servidor. Intenta nuevamente.')
       setUser(null)
       setIsLoggedIn(false)
     } finally {
+      clearTimeout(timeoutId)
       setChecking(false)
     }
   }
