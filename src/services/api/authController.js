@@ -45,7 +45,6 @@ export const getUserSession = async () => {
   try {
     // Validar sesión siempre contra el backend.
     // Esto evita falsos negativos cuando la cookie de sesión es HttpOnly
-    // y, por diseño de seguridad, no puede leerse desde document.cookie.
 
     const response = await api.get('/auth/validate-token', {
       withCredentials: true,

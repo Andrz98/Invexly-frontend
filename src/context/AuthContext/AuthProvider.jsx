@@ -13,7 +13,7 @@ const AuthProvider = ({ children }) => {
   const API_BASE = import.meta.env.VITE_API_BASE
   const ABORT_REASON = 'Validación de sesión cancelada por timeout.'
 
-  // Identifica de forma consistente los abortos de peticiones para tratarlos como cancelaciones esperadas.
+  // Normaliza la detección de cancelaciones para que los abortos esperados no rompan el flujo de autenticación.
   const isAbortError = (error) => {
     return (
       error?.name === 'AbortError' ||
@@ -46,36 +46,67 @@ const AuthProvider = ({ children }) => {
     }
   }, [navigate])
 
+  // Verifica la sesión inicial sin bloquear la UI de login si el backend falla temporalmente.
   const checkSession = async () => {
+    // Crea un timeout controlado para evitar requests colgadas durante la validación de sesión.
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(ABORT_REASON), 7000)
 
     try {
-      const response = await fetch(
-        `${API_BASE.replace(/\/$/, '')}/auth/refresh-token`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          signal: controller.signal,
-        }
-      )
+      if (!API_BASE) {
+        console.log(
+          '[AuthProvider] VITE_API_BASE no está definido, se omite checkSession.'
+        )
+        setUser(null)
+        setIsLoggedIn(false)
+        return
+      }
+
+      const refreshUrl = `${API_BASE.replace(/\/$/, '')}/auth/refresh-token`
+      console.log('[AuthProvider] Iniciando checkSession:', { refreshUrl })
+
+      const response = await fetch(refreshUrl, {
+        method: 'POST',
+        credentials: 'include',
+        signal: controller.signal,
+      })
+
+      console.log('[AuthProvider] checkSession status:', response.status)
 
       if (!response.ok) {
+        console.log(
+          '[AuthProvider] Sesión no válida o no existente; se mantiene usuario deslogueado.'
+        )
         setUser(null)
         setIsLoggedIn(false)
         return
       }
 
       const data = await response.json()
+      console.log(
+        '[AuthProvider] checkSession OK, usuario recuperado:',
+        data?.user
+      )
+      setError(null)
       setUser(data.user)
       setIsLoggedIn(true)
     } catch (err) {
       if (isAbortError(err)) {
+        console.log(
+          '[AuthProvider] checkSession abortado de forma esperada:',
+          ABORT_REASON
+        )
         return
       }
 
-      console.error('Error al validar sesión:', err)
-      setError('No se pudo conectar con el servidor. Intenta nuevamente.')
+      console.error('[AuthProvider] Error al validar sesión:', {
+        name: err?.name,
+        message: err?.message,
+        stack: err?.stack,
+      })
+
+      // No bloqueamos el modal de auth con una pantalla de error global: degradamos a estado deslogueado.
+      setError(null)
       setUser(null)
       setIsLoggedIn(false)
     } finally {
@@ -110,7 +141,17 @@ const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoggedIn, checking, login, handleLogout }}
+      value={{
+        isLoggedIn,
+        checking,
+        user,
+        error,
+        login,
+        loginRequest,
+        handleLogout,
+        checkSession,
+        setUser,
+      }}
     >
       {children}
     </AuthContext.Provider>
