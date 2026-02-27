@@ -14,24 +14,21 @@ const AuthProvider = ({ children }) => {
 
   const API_BASE = import.meta.env.VITE_API_BASE
   const SESSION_TIMEOUT_MS = Number(import.meta.env.VITE_SESSION_TIMEOUT_MS) || 45000
-  const ABORT_REASON = 'Validación de sesión cancelada por timeout.'
   const SESSION_VALIDATION_ENDPOINT = '/auth/validate-token'
 
-  // Normaliza la detección de cancelaciones para que los abortos esperados no rompan el flujo de autenticación.
-  const isAbortError = (error) => {
+  // Detecta cancelaciones esperadas para no tratarlas como errores funcionales.
+  const isAbortError = (requestError) => {
     return (
-      axios.isCancel(error) ||
-      error?.name === 'AbortError' ||
-      error?.name === 'CanceledError' ||
-      error?.code === 'ERR_CANCELED' ||
-      error?.message === ABORT_REASON ||
-      error === ABORT_REASON
+      axios.isCancel(requestError) ||
+      requestError?.name === 'AbortError' ||
+      requestError?.name === 'CanceledError' ||
+      requestError?.code === 'ERR_CANCELED'
     )
   }
 
-  // Convierte cualquier error desconocido en un objeto serializable para depuración consistente.
-  const getReadableError = (err) => {
-    if (!err) {
+  // Convierte errores desconocidos en un formato legible para depuración consistente.
+  const getReadableError = (requestError) => {
+    if (!requestError) {
       return {
         name: 'UnknownError',
         message: 'Error desconocido durante la validación de sesión.',
@@ -39,12 +36,12 @@ const AuthProvider = ({ children }) => {
     }
 
     return {
-      name: err?.name || 'UnknownError',
-      message: err?.message || 'Sin mensaje de error disponible.',
-      code: err?.code,
-      status: err?.response?.status,
-      responseData: err?.response?.data,
-      stack: err?.stack,
+      name: requestError?.name || 'UnknownError',
+      message: requestError?.message || 'Sin mensaje de error disponible.',
+      code: requestError?.code,
+      status: requestError?.response?.status,
+      responseData: requestError?.response?.data,
+      stack: requestError?.stack,
     }
   }
 
@@ -64,23 +61,16 @@ const AuthProvider = ({ children }) => {
       } else {
         console.error('Error en el logout.')
       }
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error)
+    } catch (logoutError) {
+      console.error('Error al cerrar sesión:', logoutError)
       setUser(null)
       setIsLoggedIn(false)
       navigate('/')
     }
   }, [navigate])
 
-  // Verifica la sesión inicial sin bloquear la UI de login si el backend falla temporalmente.
+  // Valida sesión contra backend y evita abortos manuales que generan falsos positivos de cancelación.
   const checkSession = async () => {
-    // Crea un timeout controlado para evitar requests colgadas durante la validación de sesión.
-    const controller = new AbortController()
-    const timeoutId = setTimeout(
-      () => controller.abort(ABORT_REASON),
-      SESSION_TIMEOUT_MS
-    )
-
     try {
       if (!API_BASE) {
         console.log(
@@ -91,58 +81,44 @@ const AuthProvider = ({ children }) => {
         return
       }
 
-      // Validamos la sesión contra el endpoint oficial para evitar discrepancias entre entornos.
-      const refreshUrl = SESSION_VALIDATION_ENDPOINT
-      console.log('[AuthProvider] Iniciando checkSession:', {
-        refreshUrl,
+      const response = await api.get(SESSION_VALIDATION_ENDPOINT, {
+        withCredentials: true,
         timeout: SESSION_TIMEOUT_MS,
       })
 
-      const response = await api.get(
-        refreshUrl,
-        {
-          signal: controller.signal,
-          withCredentials: true,
-        }
-      )
-
-      console.log('[AuthProvider] checkSession status:', response.status)
-
       if (response.status !== 200) {
-        console.log(
-          '[AuthProvider] Sesión no válida o no existente; se mantiene usuario deslogueado.'
-        )
         setUser(null)
         setIsLoggedIn(false)
         return
       }
 
-      console.log(
-        '[AuthProvider] checkSession OK, usuario recuperado:',
-        response.data?.user
-      )
       setError(null)
       setUser(response.data.user)
       setIsLoggedIn(true)
-    } catch (err) {
-      if (isAbortError(err)) {
+    } catch (requestError) {
+      if (isAbortError(requestError)) {
         console.log(
-          '[AuthProvider] checkSession abortado de forma esperada:',
-          ABORT_REASON
+          '[AuthProvider] checkSession cancelado por navegación o ciclo de vida.'
         )
         return
       }
 
-      const readableError = getReadableError(err)
-
+      const readableError = getReadableError(requestError)
       console.error('[AuthProvider] Error al validar sesión:', readableError)
 
-      // No bloqueamos el modal de auth con una pantalla de error global: degradamos a estado deslogueado.
-      setError(null)
+      // Si no hubo respuesta HTTP, informamos posible bloqueo CORS/cookies para diagnóstico rápido.
+      const hasNetworkOrCorsIssue =
+        !requestError?.response && requestError?.code === 'ERR_NETWORK'
+
+      setError(
+        hasNetworkOrCorsIssue
+          ? 'No se pudo validar la sesión por un bloqueo de red/CORS. Revisa CORS y cookies del backend.'
+          : null
+      )
+
       setUser(null)
       setIsLoggedIn(false)
     } finally {
-      clearTimeout(timeoutId)
       setChecking(false)
     }
   }
