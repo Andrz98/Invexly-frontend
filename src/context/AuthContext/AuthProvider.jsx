@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { login as loginRequest, logout } from '@/services/api/authController'
 import { AuthContext } from './AuthContext'
 import { useNavigate } from 'react-router-dom'
+import api from '@/services/api/api'
 
 const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -11,6 +12,7 @@ const AuthProvider = ({ children }) => {
   const navigate = useNavigate()
 
   const API_BASE = import.meta.env.VITE_API_BASE
+  const SESSION_TIMEOUT_MS = Number(import.meta.env.VITE_SESSION_TIMEOUT_MS) || 25000
   const ABORT_REASON = 'Validación de sesión cancelada por timeout.'
 
   // Normaliza la detección de cancelaciones para que los abortos esperados no rompan el flujo de autenticación.
@@ -50,7 +52,10 @@ const AuthProvider = ({ children }) => {
   const checkSession = async () => {
     // Crea un timeout controlado para evitar requests colgadas durante la validación de sesión.
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(ABORT_REASON), 7000)
+    const timeoutId = setTimeout(
+      () => controller.abort(ABORT_REASON),
+      SESSION_TIMEOUT_MS
+    )
 
     try {
       if (!API_BASE) {
@@ -62,18 +67,24 @@ const AuthProvider = ({ children }) => {
         return
       }
 
-      const refreshUrl = `${API_BASE.replace(/\/$/, '')}/auth/refresh-token`
-      console.log('[AuthProvider] Iniciando checkSession:', { refreshUrl })
-
-      const response = await fetch(refreshUrl, {
-        method: 'POST',
-        credentials: 'include',
-        signal: controller.signal,
+      const refreshUrl = '/auth/refresh-token'
+      console.log('[AuthProvider] Iniciando checkSession:', {
+        refreshUrl,
+        timeout: SESSION_TIMEOUT_MS,
       })
+
+      const response = await api.post(
+        refreshUrl,
+        {},
+        {
+          signal: controller.signal,
+          withCredentials: true,
+        }
+      )
 
       console.log('[AuthProvider] checkSession status:', response.status)
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         console.log(
           '[AuthProvider] Sesión no válida o no existente; se mantiene usuario deslogueado.'
         )
@@ -82,13 +93,12 @@ const AuthProvider = ({ children }) => {
         return
       }
 
-      const data = await response.json()
       console.log(
         '[AuthProvider] checkSession OK, usuario recuperado:',
-        data?.user
+        response.data?.user
       )
       setError(null)
-      setUser(data.user)
+      setUser(response.data.user)
       setIsLoggedIn(true)
     } catch (err) {
       if (isAbortError(err)) {

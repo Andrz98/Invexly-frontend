@@ -33,7 +33,16 @@ export const login = async (email, password) => {
     )
     return response.data
   } catch (error) {
+    const isTimeout = error?.code === 'ECONNABORTED'
+
     console.error('Error en login:', error.response?.data || error.message)
+
+    if (isTimeout) {
+      throw new Error(
+        'El servidor tardó demasiado en responder. Intenta nuevamente en unos segundos.'
+      )
+    }
+
     throw error
   }
 }
