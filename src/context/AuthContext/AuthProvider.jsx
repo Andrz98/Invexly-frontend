@@ -15,7 +15,11 @@ const AuthProvider = ({ children }) => {
 
   // Normaliza la detección de cancelaciones para que los abortos esperados no rompan el flujo de autenticación.
   const isAbortError = (error) => {
-    return error?.name === 'AbortError' || error === ABORT_REASON
+    return (
+      error?.name === 'AbortError' ||
+      error?.message === ABORT_REASON ||
+      error === ABORT_REASON
+    )
   }
 
   const login = (userData) => {
