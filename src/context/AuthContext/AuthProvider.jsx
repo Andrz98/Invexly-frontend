@@ -14,6 +14,7 @@ const AuthProvider = ({ children }) => {
   const API_BASE = import.meta.env.VITE_API_BASE
   const SESSION_TIMEOUT_MS = Number(import.meta.env.VITE_SESSION_TIMEOUT_MS) || 25000
   const ABORT_REASON = 'Validación de sesión cancelada por timeout.'
+  const SESSION_VALIDATION_ENDPOINT = '/auth/validate-token'
 
   // Normaliza la detección de cancelaciones para que los abortos esperados no rompan el flujo de autenticación.
   const isAbortError = (error) => {
@@ -22,6 +23,25 @@ const AuthProvider = ({ children }) => {
       error?.message === ABORT_REASON ||
       error === ABORT_REASON
     )
+  }
+
+  // Convierte cualquier error desconocido en un objeto serializable para depuración consistente.
+  const getReadableError = (err) => {
+    if (!err) {
+      return {
+        name: 'UnknownError',
+        message: 'Error desconocido durante la validación de sesión.',
+      }
+    }
+
+    return {
+      name: err?.name || 'UnknownError',
+      message: err?.message || 'Sin mensaje de error disponible.',
+      code: err?.code,
+      status: err?.response?.status,
+      responseData: err?.response?.data,
+      stack: err?.stack,
+    }
   }
 
   const login = (userData) => {
@@ -67,15 +87,15 @@ const AuthProvider = ({ children }) => {
         return
       }
 
-      const refreshUrl = '/auth/refresh-token'
+      // Validamos la sesión contra el endpoint oficial para evitar discrepancias entre entornos.
+      const refreshUrl = SESSION_VALIDATION_ENDPOINT
       console.log('[AuthProvider] Iniciando checkSession:', {
         refreshUrl,
         timeout: SESSION_TIMEOUT_MS,
       })
 
-      const response = await api.post(
+      const response = await api.get(
         refreshUrl,
-        {},
         {
           signal: controller.signal,
           withCredentials: true,
@@ -109,11 +129,9 @@ const AuthProvider = ({ children }) => {
         return
       }
 
-      console.error('[AuthProvider] Error al validar sesión:', {
-        name: err?.name,
-        message: err?.message,
-        stack: err?.stack,
-      })
+      const readableError = getReadableError(err)
+
+      console.error('[AuthProvider] Error al validar sesión:', readableError)
 
       // No bloqueamos el modal de auth con una pantalla de error global: degradamos a estado deslogueado.
       setError(null)
