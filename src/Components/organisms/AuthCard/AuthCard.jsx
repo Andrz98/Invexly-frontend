@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import api from '@/services/api/api'
 import useAuth from '@/context/AuthContext/useAuth'
-import { getUserSession } from '@/services/api/authController'
 import { toast } from 'react-toastify'
 import { X } from 'lucide-react'
 import Button from '@/Components/atoms/Button'
@@ -14,12 +13,15 @@ import PasswordToggle from '@/Components/atoms/PasswordToggle/PasswordToggle'
 const AuthCard = ({ activeForm, setActiveForm, onClose }) => {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const authRequestTimeoutMs =
+    Number(import.meta.env.VITE_AUTH_TIMEOUT_MS) || 90000
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
   })
   const [error, setError] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -39,6 +41,11 @@ const AuthCard = ({ activeForm, setActiveForm, onClose }) => {
     e.preventDefault()
     setError(null)
 
+    // Evita múltiples requests simultáneas cuando el usuario hace clic repetidas veces.
+    if (isSubmitting) {
+      return
+    }
+
     const formDatatoSend = { ...formData }
     if (activeForm === 'login') delete formDatatoSend.username
 
@@ -47,10 +54,13 @@ const AuthCard = ({ activeForm, setActiveForm, onClose }) => {
       return
     }
 
+    setIsSubmitting(true)
+
     try {
       const endpoint = activeForm === 'login' ? '/auth/login' : '/auth/register'
       const response = await api.post(endpoint, formDatatoSend, {
         withCredentials: true,
+        timeout: authRequestTimeoutMs,
       })
 
       // ✔️ Mostrar mensaje específico si es registro
@@ -80,12 +90,19 @@ const AuthCard = ({ activeForm, setActiveForm, onClose }) => {
       navigate('/dashboard')
       onClose()
     } catch (error) {
+      const isTimeoutError = error?.code === 'ECONNABORTED'
+      const errorMessage = isTimeoutError
+        ? 'El servidor está tardando demasiado en responder. Por favor, intenta nuevamente en unos instantes.'
+        : error.response?.data?.message || 'Error en la autenticación'
+
       console.error(
         'Error en autenticación:',
         error.response?.data || error.message
       )
-      setError(error.response?.data?.message || 'Error en la autenticación')
-      toast.error(error.response?.data?.message || 'Error en la autenticación')
+      setError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -158,9 +175,13 @@ const AuthCard = ({ activeForm, setActiveForm, onClose }) => {
               variant="primary"
               htmlType="submit"
               ariaLabel="Enviar formulario"
-              disabled={!isFormValid}
+              disabled={!isFormValid || isSubmitting}
             >
-              {activeForm === 'login' ? 'Iniciar sesión' : 'Registrarse'}
+              {isSubmitting
+                ? 'Procesando...'
+                : activeForm === 'login'
+                  ? 'Iniciar sesión'
+                  : 'Registrarse'}
             </Button>
 
             {/* Botón de cambio de formulario */}
