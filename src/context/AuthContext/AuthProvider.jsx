@@ -97,7 +97,9 @@ const AuthProvider = ({ children }) => {
       setIsLoggedIn(true)
     } catch (requestError) {
       if (isAbortError(requestError)) {
-        console.log('[AuthProvider] checkSession cancelado por navegación o ciclo de vida.')
+        console.log(
+          '[AuthProvider] checkSession cancelado por navegación o ciclo de vida.'
+        )
         return
       }
 
